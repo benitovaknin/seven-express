@@ -150,7 +150,7 @@ export default function AdminPage() {
   /* ──────────── Category helpers ──────────── */
   function openNewCat() {
     setEditingCat('new')
-    setCatForm({ name: '', slug: '', sort_order: String(categories.length) })
+    setCatForm({ name: '', slug: '', sort_order: String(categories.length), parent_id: '' })
   }
   function openEditCat(c: Category) {
     setEditingCat(c.id)
