@@ -46,13 +46,12 @@ export default function HeroBanner() {
               href="#products"
               onClick={(e) => {
                 e.preventDefault()
-                document.querySelector('main')?.scrollTo({ top: 300, behavior: 'smooth' })
-                window.scrollTo({ top: 300, behavior: 'smooth' })
+                document.getElementById('categories-section')?.scrollIntoView({ behavior: 'smooth' })
               }}
               className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-xl transition-all shadow-lg hover:shadow-red-900/30 active:scale-95"
             >
               <ShoppingCart size={18} />
-              התחל לקנות
+              התחל הזמנה
             </Link>
             <Link
               href="/register"

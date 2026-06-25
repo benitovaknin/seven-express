@@ -26,7 +26,7 @@ export default function ProductGrid({ products, categories }: Props) {
     categories.find(c => c.id === selectedCategory)?.name ?? 'כל המוצרים'
 
   return (
-    <div>
+    <div id="categories-section">
       {/* Category grid on top */}
       <CategoryFilter
         categories={categories}
