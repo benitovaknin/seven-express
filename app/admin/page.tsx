@@ -8,7 +8,7 @@ import type { Product, Category } from '@/types'
 import {
   Pencil, X, ArrowLeft, Upload, Loader2,
   Plus, Check, ImageIcon, Trash2, PackageOpen, Link2,
-  Tag, ShoppingBag, FileSpreadsheet,
+  Tag, ShoppingBag, FileSpreadsheet, ClipboardList, ChevronDown, ChevronUp,
 } from 'lucide-react'
 import ImportModal from '@/components/ImportModal'
 
@@ -29,8 +29,16 @@ function toSlug(str: string) {
   return str.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') || `cat-${Date.now()}`
 }
 
+interface OrderItem { id: string; quantity: number; unit_price: number; product: { name: string } }
+interface Order {
+  id: string; created_at: string; status: string; total_amount: number
+  delivery_name: string; delivery_phone: string; delivery_city: string
+  delivery_address: string; notes: string | null
+  order_items?: OrderItem[]
+}
+
 export default function AdminPage() {
-  const [section, setSection] = useState<'products' | 'categories'>('products')
+  const [section, setSection] = useState<'products' | 'categories' | 'orders'>('products')
 
   /* products */
   const [products, setProducts] = useState<Product[]>([])
@@ -46,6 +54,10 @@ export default function AdminPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [editingCat, setEditingCat] = useState<string | 'new' | null>(null)
   const [catForm, setCatForm] = useState<CatForm>(EMPTY_CAT)
+
+  /* orders */
+  const [orders, setOrders] = useState<Order[]>([])
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
 
   /* shared */
   const [saving, setSaving] = useState(false)
@@ -69,12 +81,19 @@ export default function AdminPage() {
   }
 
   async function loadAll() {
-    const [{ data: prods }, { data: cats }] = await Promise.all([
+    const [{ data: prods }, { data: cats }, { data: ords }] = await Promise.all([
       supabase.from('products').select('*, category:categories(*)').order('created_at', { ascending: false }),
       supabase.from('categories').select('*').order('sort_order'),
+      supabase.from('orders').select('*, order_items(*, product:products(name))').order('created_at', { ascending: false }),
     ])
     setProducts(prods ?? [])
     setCategories(cats ?? [])
+    setOrders(ords ?? [])
+  }
+
+  async function updateOrderStatus(orderId: string, status: string) {
+    await supabase.from('orders').update({ status }).eq('id', orderId)
+    await loadAll()
   }
 
   /* ──────────── Product helpers ──────────── */
@@ -228,7 +247,7 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="bg-white border-b px-6">
         <div className="flex gap-0 max-w-5xl mx-auto">
-          {([['products', <ShoppingBag size={15} />, 'מוצרים'], ['categories', <Tag size={15} />, 'קטגוריות']] as const).map(([key, icon, label]) => (
+          {([['products', <ShoppingBag size={15} />, 'מוצרים'], ['categories', <Tag size={15} />, 'קטגוריות'], ['orders', <ClipboardList size={15} />, 'הזמנות']] as const).map(([key, icon, label]) => (
             <button
               key={key}
               onClick={() => setSection(key)}
@@ -242,7 +261,7 @@ export default function AdminPage() {
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                 section === key ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
               }`}>
-                {key === 'products' ? products.length : categories.length}
+                {key === 'products' ? products.length : key === 'categories' ? categories.length : orders.length}
               </span>
             </button>
           ))}
@@ -400,6 +419,77 @@ export default function AdminPage() {
             </div>
           )
         )}
+        {/* ── Orders ── */}
+        {section === 'orders' && (
+          orders.length === 0 ? (
+            <div className="text-center py-24">
+              <ClipboardList size={56} className="mx-auto mb-4 text-gray-200" />
+              <p className="text-gray-400 font-medium">אין הזמנות עדיין.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {orders.map(order => {
+                const isExpanded = expandedOrder === order.id
+                const statusMap: Record<string, { label: string; cls: string }> = {
+                  pending: { label: 'ממתינה', cls: 'bg-amber-50 text-amber-600' },
+                  confirmed: { label: 'אושרה', cls: 'bg-blue-50 text-blue-600' },
+                  delivered: { label: 'נמסרה', cls: 'bg-green-50 text-green-600' },
+                  cancelled: { label: 'בוטלה', cls: 'bg-red-50 text-red-400' },
+                }
+                const s = statusMap[order.status] ?? { label: order.status, cls: 'bg-gray-100 text-gray-500' }
+                return (
+                  <div key={order.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50/50" onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-sm font-bold text-gray-700">#{order.id.slice(0,8).toUpperCase()}</span>
+                          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>
+                          <span className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-0.5">{order.delivery_name} · {order.delivery_phone} · {order.delivery_city}</p>
+                      </div>
+                      <div className="text-left flex-shrink-0">
+                        <p className="font-bold text-blue-600">₪{order.total_amount.toFixed(2)}</p>
+                      </div>
+                      {isExpanded ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
+                    </div>
+
+                    {isExpanded && (
+                      <div className="border-t border-gray-100 px-5 py-4 space-y-4">
+                        <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                          <div><span className="text-gray-400">כתובת: </span><span className="font-medium">{order.delivery_address}, {order.delivery_city}</span></div>
+                          <div><span className="text-gray-400">טלפון: </span><span className="font-medium">{order.delivery_phone}</span></div>
+                          {order.notes && <div className="sm:col-span-2"><span className="text-gray-400">הערות: </span><span className="font-medium">{order.notes}</span></div>}
+                        </div>
+
+                        {order.order_items && order.order_items.length > 0 && (
+                          <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+                            {order.order_items.map(item => (
+                              <div key={item.id} className="flex justify-between text-sm">
+                                <span className="text-gray-700">{item.product?.name ?? 'מוצר'} <span className="text-gray-400">×{item.quantity}</span></span>
+                                <span className="font-semibold">₪{(item.unit_price * item.quantity).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 flex-wrap">
+                          {['pending','confirmed','delivered','cancelled'].map(st => (
+                            <button key={st} onClick={() => updateOrderStatus(order.id, st)}
+                              className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${order.status === st ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600'}`}>
+                              {statusMap[st]?.label ?? st}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        )}
+
       </main>
 
       {/* ═══════════ Product Modal ═══════════ */}
