@@ -71,7 +71,7 @@ export default function Navbar() {
               >
                 <Package size={16} /> הזמנות
               </Link>
-              {user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
+              {process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(e => e.trim()).includes(user.email ?? '') && (
                 <Link
                   href="/admin"
                   className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-blue-600 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"

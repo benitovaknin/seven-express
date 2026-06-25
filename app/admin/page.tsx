@@ -60,7 +60,8 @@ export default function AdminPage() {
   async function init() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login?next=/admin'); return }
-    if (process.env.NEXT_PUBLIC_ADMIN_EMAIL && user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+    const admins = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(e => e.trim()) ?? []
+    if (admins.length > 0 && !admins.includes(user.email ?? '')) {
       router.push('/'); return
     }
     await loadAll()
