@@ -163,7 +163,14 @@ export default function AdminPage() {
   async function deleteProduct(id: string, name: string) {
     if (!confirm(`למחוק את "${name}"?`)) return
     const { error } = await supabase.from('products').delete().eq('id', id)
-    if (error) { alert('מחיקה נכשלה: ' + error.message); return }
+    if (error) {
+      if (error.message.includes('foreign key')) {
+        alert(`לא ניתן למחוק את "${name}" כי הוא מופיע בהזמנות קיימות.\nניתן לבטל את המוצר על ידי הורדת המלאי ל-0.`)
+      } else {
+        alert('מחיקה נכשלה: ' + error.message)
+      }
+      return
+    }
     await loadAll(); closeProduct()
   }
 
