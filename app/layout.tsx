@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Heebo } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
-import CartDrawer from '@/components/CartDrawer'
 
 const heebo = Heebo({ subsets: ['hebrew', 'latin'] })
 
@@ -17,7 +16,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${heebo.className} bg-gray-50 min-h-screen`}>
         <Navbar />
         {children}
-        <CartDrawer />
       </body>
     </html>
   )
