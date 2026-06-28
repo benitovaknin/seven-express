@@ -6,10 +6,11 @@ import { useCartStore } from '@/store/cartStore'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 export default function Navbar() {
-  const openCart = useCartStore(state => state.openCart)
+  const openCart = useCartStore(state => state.openCart) // kept for compatibility
   const [itemCount, setItemCount] = useState(0)
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const router = useRouter()
@@ -107,7 +108,7 @@ export default function Navbar() {
 
           {/* Cart */}
           <button
-            onClick={openCart}
+            onClick={() => router.push('/checkout')}
             className="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors ms-1"
             aria-label={`סל קניות, ${itemCount} פריטים`}
           >
