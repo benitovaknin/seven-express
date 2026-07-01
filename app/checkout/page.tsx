@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, CheckCircle2, ShoppingBag } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, ShoppingBag, Plus, Minus, Trash2 } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -17,7 +17,7 @@ interface FormState {
 }
 
 export default function CheckoutPage() {
-  const { items, totalPrice, clearCart } = useCartStore()
+  const { items, totalPrice, clearCart, updateQuantity, removeItem } = useCartStore()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -198,7 +198,24 @@ export default function CheckoutPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{item.product.name}</p>
-                <p className="text-xs text-gray-400">×{item.quantity}</p>
+                <p className="text-xs text-gray-400 mb-1">₪{item.product.price.toFixed(2)} ליחידה</p>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => item.quantity <= 1 ? removeItem(item.product.id) : updateQuantity(item.product.id, item.quantity - 1)}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                  >
+                    {item.quantity <= 1 ? <Trash2 size={12} className="text-red-400" /> : <Minus size={12} />}
+                  </button>
+                  <span className="w-7 text-center text-sm font-bold">{item.quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                  >
+                    <Plus size={12} />
+                  </button>
+                </div>
               </div>
               <p className="text-sm font-semibold text-gray-900 flex-shrink-0">
                 ₪{(item.product.price * item.quantity).toFixed(2)}
