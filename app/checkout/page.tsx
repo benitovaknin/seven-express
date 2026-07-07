@@ -32,8 +32,14 @@ export default function CheckoutPage() {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { router.push('/login?next=/checkout'); return }
       setUser(data.user)
-      const name = data.user.user_metadata?.full_name ?? ''
-      if (name) setForm(f => ({ ...f, name }))
+      const saved = localStorage.getItem(`delivery-${data.user.id}`)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setForm(f => ({ ...f, ...parsed, notes: '' }))
+      } else {
+        const name = data.user.user_metadata?.full_name ?? ''
+        if (name) setForm(f => ({ ...f, name }))
+      }
     })
   }, [])
 
@@ -66,6 +72,10 @@ export default function CheckoutPage() {
       setLoading(false)
       return
     }
+
+    localStorage.setItem(`delivery-${user.id}`, JSON.stringify({
+      name: form.name, phone: form.phone, city: form.city, address: form.address,
+    }))
 
     await supabase.from('order_items').insert(
       items.map(item => ({
