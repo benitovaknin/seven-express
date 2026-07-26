@@ -86,6 +86,26 @@ export default function CheckoutPage() {
       }))
     )
 
+    fetch('/api/notify-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: order.id.slice(0, 8).toUpperCase(),
+        customerEmail: user.email,
+        deliveryName: form.name,
+        deliveryPhone: form.phone,
+        deliveryCity: form.city,
+        deliveryAddress: form.address,
+        notes: form.notes || undefined,
+        totalAmount: totalPrice(),
+        items: items.map(item => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          unitPrice: item.product.price,
+        })),
+      }),
+    }).catch(() => {})
+
     clearCart()
     setOrderId(order.id.slice(0, 8).toUpperCase())
     setSuccess(true)

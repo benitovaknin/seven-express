@@ -6,8 +6,14 @@ import Navbar from '@/components/Navbar'
 const heebo = Heebo({ subsets: ['hebrew', 'latin'] })
 
 export const metadata: Metadata = {
-  title: 'גרינשופ — מוצרים בריאים',
-  description: 'חטיפים בריאים, חלבון ומשקאות.',
+  metadataBase: new URL('https://seven-express-business-market.com'),
+  title: 'Seven Express - Market Business',
+  description: 'Seven Express - Market Business',
+  openGraph: {
+    title: 'Seven Express - Market Business',
+    description: 'Seven Express - Market Business',
+    images: ['/logo.png'],
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
