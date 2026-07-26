@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar'
 const heebo = Heebo({ subsets: ['hebrew', 'latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://seven-express-business-market.com'),
   title: 'Seven Express - Market Business',
   description: 'Seven Express - Market Business',
   openGraph: {
