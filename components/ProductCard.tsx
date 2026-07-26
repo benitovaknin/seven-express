@@ -9,6 +9,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const { addItem, items, updateQuantity, removeItem } = useCartStore()
   const [imgSrc, setImgSrc] = useState(product.image_url || '/placeholder.svg')
   const [added, setAdded] = useState(false)
+  const [zoomed, setZoomed] = useState(false)
 
   const cartItem = items.find(i => i.product.id === product.id)
   const qty = cartItem?.quantity ?? 0
@@ -37,7 +38,8 @@ export default function ProductCard({ product }: { product: Product }) {
           src={imgSrc}
           alt={product.name}
           onError={() => setImgSrc('/placeholder.svg')}
-          className="w-full h-full object-contain p-3"
+          onClick={() => setZoomed(true)}
+          className="w-full h-full object-contain p-3 cursor-zoom-in"
         />
         {outOfStock && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
@@ -45,6 +47,19 @@ export default function ProductCard({ product }: { product: Product }) {
           </div>
         )}
       </div>
+
+      {zoomed && (
+        <div
+          onClick={() => setZoomed(false)}
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6 cursor-zoom-out"
+        >
+          <img
+            src={imgSrc}
+            alt={product.name}
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl"
+          />
+        </div>
+      )}
 
       {/* Info */}
       <div className="flex flex-col flex-1 p-3 gap-2">
