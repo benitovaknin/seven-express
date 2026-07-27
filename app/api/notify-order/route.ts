@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { generateOrderPdf } from '@/lib/orderPdf'
+
+export const runtime = 'nodejs'
 
 const OWNER_EMAIL = 'shaharmualem6@gmail.com'
 const FROM_ADDRESS = 'Seven Express <orders@seven-express-business-market.com>'
@@ -46,18 +49,28 @@ export async function POST(request: Request) {
     </div>
   `
 
+  const pdfBytes = await generateOrderPdf(payload)
+  const attachments = [
+    {
+      filename: `order-${payload.orderId}.pdf`,
+      content: Buffer.from(pdfBytes).toString('base64'),
+    },
+  ]
+
   const results = await Promise.all([
     resend.emails.send({
       from: FROM_ADDRESS,
       to: OWNER_EMAIL,
       subject: `הזמנה חדשה #${payload.orderId}`,
       html: orderSummaryHtml,
+      attachments,
     }),
     resend.emails.send({
       from: FROM_ADDRESS,
       to: payload.customerEmail,
       subject: `ההזמנה שלך ב-Seven Express נתקבלה #${payload.orderId}`,
       html: orderSummaryHtml,
+      attachments,
     }),
   ])
 
